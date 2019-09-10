@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t smcnutt/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true smcnutt/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t smcnutt/multi-client ./client
+  - docker build -t smcnutt/multi-nginx ./nginx
+  - docker build -t smcnutt/multi-server ./server
+  - docker build -t smcnutt/multi-worker ./worker
+  
+  - echo $DOCKER_PASSWORD | docker login docker.io -u $DOCKER_USERNAME --password-stdin
+  
+  - docker push smcnutt/multi-client
+  - docker push smcnutt/multi-nginx
+  - docker push smcnutt/multi-server
+  - docker push smcnutt/multi-worker
